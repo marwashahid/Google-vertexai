@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from main import generate_story
 
 # Set the page title and favicon
 st.set_page_config(page_title="Story Spark", page_icon=":books:")
@@ -54,22 +55,20 @@ input_level = st.selectbox("Choose level of your child", options=["Toddler", "Pr
 # Generate the story on button click
 if st.button("Generate Story"):
     # Send the input to the backend endpoint
-    response = requests.get("http://localhost:8080/generate", params={
+    story_features={
         "movie_genre": input_genre,
         "grade_level": input_level,
         "prompt_length": input_type.lower()
-    })
-
-    # Process the response from the backend
-    if response.status_code == 200:
-        output = response.json().get("response")
+    }
+    try:
+        output = generate_story(story_features)
         if output:
             st.text("Generated Story:")
             st.write(output)
         else:
             st.error("Error: Empty response received from the backend")
-    else:
-        st.error("Error: Failed to generate story")
+    except Exception as e:
+        st.error("Error: Failed to generate story--", e)
 
 # Set the footer
 st.markdown(

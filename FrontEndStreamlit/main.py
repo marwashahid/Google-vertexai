@@ -1,5 +1,3 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from google.oauth2 import service_account
 import google.cloud.aiplatform as aiplatform
 import vertexai
@@ -8,7 +6,7 @@ import json
 
 # Load the service account json file
 # Update the values in the json file with your own
-with open("googlevertexai-fastapi/app/service_account.json") as f:
+with open("FrontEndStreamlit/service_account.json") as f:
     service_account_info = json.load(f)
 
 my_credentials = service_account.Credentials.from_service_account_info(
@@ -18,7 +16,7 @@ my_credentials = service_account.Credentials.from_service_account_info(
 # Initialize Google AI Platform with project details and credentials
 aiplatform.init(credentials=my_credentials)
 
-with open("service_account.json", encoding="utf-8") as f:
+with open("FrontEndStreamlit/service_account.json", encoding="utf-8") as f:
     project_json = json.load(f)
     project_id = project_json["project_id"]
 
@@ -28,26 +26,10 @@ vertexai.init(project=project_id, location="us-central1")
 # Initialize the model
 model = TextGenerationModel.from_pretrained("text-bison@001")
 
-# Initialize the FastAPI application
-app = FastAPI()
 
-# Configure CORS for the application
-origins = ["http://localhost", "http://localhost:8080", "http://localhost:3000"]
-origin_regex = r"https://(.*\.)?alexsystems\.ai"
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=origin_regex,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-@app.get("/generate")
-async def generate_story(request: Request):
+def generate_story(story_features):
     """
-    Endpoint to generate a story based on query parameters.
+    Endpoint to generate a story based on story parameters.
     """
     # Define the model parameters
     parameters = {
@@ -57,10 +39,10 @@ async def generate_story(request: Request):
         "top_k": 40
     }
 
-    # Extract inputs from query parameters
-    movie_genre = request.query_params.get("movie_genre", "sci-fi")
-    grade_level = request.query_params.get("grade_level", "7")
-    prompt_length = request.query_params.get("prompt_length", "short")
+    # Extract inputs from story parameters
+    movie_genre = story_features.get("movie_genre", "sci-fi")
+    grade_level = story_features.get("grade_level", "7")
+    prompt_length = story_features.get("prompt_length", "short")
 
     prompt = ""
 
@@ -71,4 +53,8 @@ async def generate_story(request: Request):
         prompt = f"Write a creative {movie_genre} story for {grade_level} graders over 350 words. Use vivid language and descriptive details to craft an engaging tale {grade_level} students will enjoy. Develop compelling characters and build suspense to keep readers interested. Focus on themes and situations appropriate for {grade_level}-grade students."
 
     response = model.predict(prompt, **parameters)
-    return {"response": response.text}
+    return response.text
+
+
+
+print(generate_story({}))
