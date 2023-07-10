@@ -8,7 +8,7 @@ import json
 
 # Load the service account json file
 # Update the values in the json file with your own
-with open("service_account.json") as f:
+with open("googlevertexai-fastapi/app/service_account.json") as f:
     service_account_info = json.load(f)
 
 my_credentials = service_account.Credentials.from_service_account_info(
