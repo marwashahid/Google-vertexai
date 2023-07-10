@@ -6,7 +6,7 @@ import json
 
 # Load the service account json file
 # Update the values in the json file with your own
-with open("FrontEndStreamlit\service_account.json") as f:
+with open("service_account.json") as f:
     service_account_info = json.load(f)
 
 my_credentials = service_account.Credentials.from_service_account_info(
@@ -16,7 +16,7 @@ my_credentials = service_account.Credentials.from_service_account_info(
 # Initialize Google AI Platform with project details and credentials
 aiplatform.init(credentials=my_credentials)
 
-with open("FrontEndStreamlit\service_account.json", encoding="utf-8") as f:
+with open("service_account.json", encoding="utf-8") as f:
     project_json = json.load(f)
     project_id = project_json["project_id"]
 
