@@ -1,5 +1,13 @@
 import streamlit as st
 import requests
+import os
+
+output_folder = output_folder = os.path.join("audio_output")
+backend_url = "http://localhost:8080"  
+
+
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
 
 # Set the page title and favicon
 st.set_page_config(page_title="Story Spark", page_icon=":books:")
@@ -51,10 +59,14 @@ input_genre = st.text_input("Genre", value="Science Fiction")
 input_type = st.radio("Choose your story type", options=["Short", "Long"], index=0)
 input_level = st.selectbox("Choose level of your child", options=["Toddler", "Pre-School", "School-Age", "Adolescent"], index=0)
 
+# Store the state of story generation
+if "story_generated" not in st.session_state:
+    st.session_state.story_generated = False
+
 # Generate the story on button click
 if st.button("Generate Story"):
     # Send the input to the backend endpoint
-    response = requests.get("http://localhost:8080/generate", params={
+    response = requests.get(f"{backend_url}/generate", params={
         "movie_genre": input_genre,
         "grade_level": input_level,
         "prompt_length": input_type.lower()
@@ -66,10 +78,31 @@ if st.button("Generate Story"):
         if output:
             st.text("Generated Story:")
             st.write(output)
+            st.session_state.story_generated = True  # Update the state that the story has been generated
+            st.session_state.generated_story = output  # Store the generated story in session state
         else:
             st.error("Error: Empty response received from the backend")
     else:
         st.error("Error: Failed to generate story")
+
+if st.session_state.story_generated:
+    if st.button("Generate Speech"):
+        if "generated_story" in st.session_state:
+            story = st.session_state.generated_story
+            response = requests.get(f"{backend_url}/speech", params={"story": story})
+
+            if response.status_code == 200:
+                audio_paths = response.json().get("audio_paths")
+                if audio_paths:
+                    for audio_path in audio_paths:
+                        audio_file_path = os.path.join(output_folder, audio_path)
+                        st.audio(audio_file_path, format="audio/mp3")
+                else:
+                    st.error("Error: Empty response received from the backend")
+            else:
+                st.error("Error: Failed to generate speech")
+        else:
+            st.warning("Please generate the story first")  
 
 # Set the footer
 st.markdown(
